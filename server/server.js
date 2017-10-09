@@ -2,7 +2,7 @@ var express     = require('express')
 var bodyParser  = require('body-parser')
 var {mongoose}  = require('./db');
 var db          = mongoose.connection;
-
+const config    = require('./config/config')
 
 var app = express();
 
@@ -14,6 +14,6 @@ app.use(bodyParser.json());
 
 app.use('/z_user',user);
 
-app.listen(3000 , () => {
-  console.log('server is running at 3000');
+app.listen(config.PORT , () => {
+  console.log('server is running at', config.PORT);
 });
