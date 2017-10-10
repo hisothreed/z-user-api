@@ -5,6 +5,10 @@ const bcrypt    = require('bcrypt');
 const validator = require('validator');
 const jwt       = require('jsonwebtoken');
 const config    = require('./../config/config')
+const ObjectId  = Schema.Types.ObjectId;
+
+
+
 var UserSchema = new Schema({
   first_name : {
     type: String,
@@ -27,6 +31,14 @@ var UserSchema = new Schema({
     required : true,
     minlenght: 6
   },
+  bio : {
+    type: String,
+    required : false
+  },
+  age : {
+    type : Number,
+    required : false
+  },
   platform : {
     type : String,
     required : false,
@@ -46,7 +58,13 @@ var UserSchema = new Schema({
       type: String,
       required: false
     }
-  }]
+  }],
+  updated_at : {
+    type : Date
+  },
+  created_at : {
+    type : Date
+  }
 });
 
 
@@ -63,9 +81,20 @@ UserSchema.pre('save',function (next) {
   }else{
     next();
   }
+})
+// setting dates
+UserSchema.pre('save',function (next) {
+  var user = this;
+  var now  = new Date();
+  user.updated_at = now;
+  if ( !user.created_at ) {
+    user.created_at = now;
+    next();
+  }else{
+    next();
+  }
 
 })
-
 UserSchema.statics.validateUser = function({email,password}) {
   var User = this;
 
@@ -107,9 +136,26 @@ UserSchema.statics.findByToken = function(token) {
   })
 }
 
+UserSchema.statics.updateUserInfo = function(userData) {
+  var User = this;
+  return User.findOneAndUpdate({_id : userData._id }, {
+    email : userData.email,
+    password : userData.password,
+    first_name : userData.first_name,
+    last_name : userData.last_name,
+  },(err ,doc) => {
+    return new Promise((resolve,reject) => {
+      if (!err) {
+        resolve(_.pick(doc,['email','first_name','last_name']));
+      }else{
+        reject('Not Found');
+      }
+    })
+  })
+}
+
 UserSchema.methods.destroySessionToken = function(token) {
   var user = this;
-  console.log(token);
   return user.update({
     $pull: {
       tokens: {token}

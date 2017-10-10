@@ -22,14 +22,24 @@ exports.auth_user = function(req,res) {
   });
 }
 
+exports.get_user = function(req,res) {
+  res.send({ name: 'name test' , _id : req.params.id });
+}
+
+exports.update_user = function(req, res) {
+  var userData = _.pick(req.body, ['email','password','first_name','last_name'])
+  userData._id = req.user._id;
+  User.updateUserInfo(userData).then(res => {
+    res.send(res)
+  },(e) => {
+    res.status(400).send(e)
+  })
+}
+
 exports.destroy_user = function(req, res) {
   req.user.destroySessionToken(req.token).then(userDoc => {
     res.send('Session destroyed successfully');
   }).catch(e => {
     res.status(401).send(e);
   })
-}
-
-exports.get_user = function(req,res) {
-  res.send({ name: 'name test' , _id : req.params.id });
 }
