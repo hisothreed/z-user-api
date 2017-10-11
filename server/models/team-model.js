@@ -13,8 +13,14 @@ var TeamSchema = new Schema({
     required  : true
   },
   description : String,
-  creator : {},
-  owner   : {},
+  creator : {
+    type: String,
+    required  : true
+  },
+  owner   : {
+    type: String,
+    required  : true
+  },
   members : [],
-  created_at :
+  created_at : Date
 });

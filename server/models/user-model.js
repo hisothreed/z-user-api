@@ -67,7 +67,7 @@ var UserSchema = new Schema({
   }
 });
 
-
+// MIDDLEWARE -- PRE SAVE-UPDATE-DELETE
 // SETTING PASSWORD --- HASHING
 UserSchema.pre('save',function (next) {
   var user = this;
@@ -93,8 +93,33 @@ UserSchema.pre('save',function (next) {
   }else{
     next();
   }
-
 })
+UserSchema.pre('update',function (next) {
+  var user = this;
+  var now  = new Date();
+  user.updated_at = now;
+  if ( !user.created_at ) {
+    user.created_at = now;
+    next();
+  }else{
+    next();
+  }
+})
+UserSchema.pre('update',function (next) {
+  var user = this;
+  if (user.isModified('password')) {
+    bcrypt.genSalt(10, (err, salt) => {
+      bcrypt.hash(user.password, salt, (err, hash) => {
+        user.password = hash;
+        next();
+      })
+    })
+  }else{
+    next();
+  }
+})
+
+// CLASS METHODS (STATICS)
 UserSchema.statics.validateUser = function({email,password}) {
   var User = this;
 
@@ -114,14 +139,6 @@ UserSchema.statics.validateUser = function({email,password}) {
     });
   })
 };
-UserSchema.methods.generateAuthToken = function() {
-  var user = this;
-  var token = jwt.sign({ _id : user._id.toHexString()}, config.JWT_SECRET);
-  user.tokens.push({token : token});
-  return user.save().then(savedUser => {
-    return token
-  });
-}
 
 UserSchema.statics.findByToken = function(token) {
   var user = this;
@@ -138,17 +155,22 @@ UserSchema.statics.findByToken = function(token) {
 
 UserSchema.statics.updateUserInfo = function(userData) {
   var User = this;
-  return User.findOne({
-    _id : userData._id
-  }).then(user => {
-    user.email      = userData.email
-    user.first_name = userData.first_name
-    user.last_name  = userData.last_name
-    user.password   = userData.password
-    return user.save().then(savedUser => {
-      return _.pick(savedUser,['email','first_name', 'last_name'])
-    });
+  var options = {_id , email , first_name , last_name, password } = userData;
+  return User.findOneAndUpdate({_id},options).then(doc => {
+    return _.pick(options ,['email','first_name','last_name']);
+  }).catch(e => {
+    return Promise.reject(e);
   })
+}
+
+// INSTANCE METHODS (METHODS)
+UserSchema.methods.generateAuthToken = function() {
+  var user = this;
+  var token = jwt.sign({ _id : user._id.toHexString()}, config.JWT_SECRET);
+  user.tokens.push({token : token});
+  return user.save().then(savedUser => {
+    return token
+  });
 }
 
 UserSchema.methods.destroySessionToken = function(token) {
