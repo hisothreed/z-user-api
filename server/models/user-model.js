@@ -138,19 +138,16 @@ UserSchema.statics.findByToken = function(token) {
 
 UserSchema.statics.updateUserInfo = function(userData) {
   var User = this;
-  return User.findOneAndUpdate({_id : userData._id }, {
-    email : userData.email,
-    password : userData.password,
-    first_name : userData.first_name,
-    last_name : userData.last_name,
-  },(err ,doc) => {
-    return new Promise((resolve,reject) => {
-      if (!err) {
-        resolve(_.pick(doc,['email','first_name','last_name']));
-      }else{
-        reject('Not Found');
-      }
-    })
+  return User.findOne({
+    _id : userData._id
+  }).then(user => {
+    user.email      = userData.email
+    user.first_name = userData.first_name
+    user.last_name  = userData.last_name
+    user.password   = userData.password
+    return user.save().then(savedUser => {
+      return _.pick(savedUser,['email','first_name', 'last_name'])
+    });
   })
 }
 

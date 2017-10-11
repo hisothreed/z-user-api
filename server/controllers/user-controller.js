@@ -29,10 +29,10 @@ exports.get_user = function(req,res) {
 exports.update_user = function(req, res) {
   var userData = _.pick(req.body, ['email','password','first_name','last_name'])
   userData._id = req.user._id;
-  User.updateUserInfo(userData).then(res => {
-    res.send(res)
+  User.updateUserInfo(userData).then((userModel) => {
+    res.send(userModel)
   },(e) => {
-    res.status(400).send(e)
+    console.log('erre');
   })
 }
 
