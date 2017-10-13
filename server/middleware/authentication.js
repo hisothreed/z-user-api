@@ -1,7 +1,6 @@
 var User = require('./../models/user-model');
 
-
-var authenticate = function(req, res, next) {
+var authenticate_user = function(req, res, next) {
   var token = req.header('z-auth');
   User.findByToken(token).then((user) => {
     if (!user) {
@@ -14,5 +13,7 @@ var authenticate = function(req, res, next) {
     res.status(401).send();
   });
 };
-
-module.exports = {authenticate};
+// var authenticate_team_owner = function(req, res, next) {
+//   var token = req.header(z-auth);
+// }
+module.exports = authenticate_user;

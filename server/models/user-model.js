@@ -31,6 +31,10 @@ var UserSchema = new Schema({
     required : true,
     minlenght: 6
   },
+  teams : [{
+    team_id : String,
+    role    : String
+  }],
   bio : {
     type: String,
     required : false
@@ -155,14 +159,29 @@ UserSchema.statics.findByToken = function(token) {
 
 UserSchema.statics.updateUserInfo = function(userData) {
   var User = this;
-  var options = {_id , email , first_name , last_name, password } = userData;
-  return User.findOneAndUpdate({_id},options).then(doc => {
+  var options = {_id , email , first_name , last_name, password} = userData;
+  return User.findOneAndUpdate({_id},options)
+  .then(doc => {
     return _.pick(options ,['email','first_name','last_name']);
   }).catch(e => {
     return Promise.reject(e);
   })
 }
-
+UserSchema.statics.assignTeam = function(teamData,role) {
+  var User = this;
+  return User.findOne({ _id : teamData.creator_id })
+  .then(user => {
+    user.teams.push({ team_id : teamData._id , role : role })
+    return user.save()
+    .then(updated_user => {
+      return teamData;
+    }, e => {
+      return Promise.reject(e);
+    })
+  }, e => {
+    return Promise.reject(e);
+  })
+}
 // INSTANCE METHODS (METHODS)
 UserSchema.methods.generateAuthToken = function() {
   var user = this;

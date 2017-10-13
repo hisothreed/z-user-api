@@ -1,6 +1,6 @@
 var app    = require('express')
 var router = app.Router();
-var {authenticate} = require('./../middleware/authintication');
+var authenticate_user = require('./../middleware/authentication');
 var userController = require('./../controllers/user-controller');
 
 
@@ -12,12 +12,12 @@ router.post('/' ,userController.create_user);
 router.post('/auth' ,userController.auth_user);
 
 // GET USER INFO (READ USER INFO)
-router.get('/:id' ,authenticate ,userController.get_user);
+router.get('/:id' ,authenticate_user ,userController.get_user);
 
 // PUT AUTH (EDIT USER - UPDATE USER)
-router.put('/' ,authenticate ,userController.update_user);
+router.put('/' ,authenticate_user ,userController.update_user);
 
 // DELETE AUTH (DESTROY USER SESSION - SIGN OUT)
-router.delete('/auth' ,authenticate ,userController.destroy_user);
+router.delete('/auth' ,authenticate_user ,userController.destroy_user);
 
 module.exports = router;
