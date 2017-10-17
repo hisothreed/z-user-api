@@ -21,8 +21,13 @@ var TeamSchema = new Schema({
     type: ObjectId,
     required  : true
   },
-  members : [],
-    created_at : Date
+  members : [{
+    member_id : {
+      type: ObjectId
+    },
+    _id : false
+  }],
+  created_at : Date
 });
 
 // setting dates
@@ -52,10 +57,42 @@ TeamSchema.pre('update',function (next) {
 
 TeamSchema.statics = {
   createTeam(teamData) {
-    var team = new this(teamData);
-    return team.save()
+    var Team = new this(teamData);
+    return Team.save()
     .then(doc => {
       return doc
+    })
+    .catch(e => {
+      return Promise.reject(e);
+    })
+  },
+  validateUserMembership(user_id) {
+    var Team = this;
+    return Team.findOne({ members : { member_id : user_id } })
+    .then(res => {
+      return res;
+    })
+  },
+  addMember(user_id, team_id) {
+    var Team = this;
+    return Team.findOneAndUpdate({ _id : team_id}, { $push: {
+      members: { member_id : user_id.toHexString() } }
+    })
+    .then(savedTeam => {
+      return savedTeam;
+    })
+    .catch(e => {
+      return Promise.reject();
+    })
+  },
+  removeMember(team_id, user_id) {
+    var Team = this;
+
+    return Team.findOneAndUpdate({ _id : team_id } , { $pull : {
+      members : { member_id : user_id } }
+    })
+    .then(savedTeam => {
+      return savedTeam;
     })
     .catch(e => {
       return Promise.reject(e);

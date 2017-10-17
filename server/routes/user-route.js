@@ -1,6 +1,7 @@
 var app    = require('express')
 var router = app.Router();
-var authenticate_user = require('./../middleware/authentication');
+var {authenticate_user} = require('./../middleware/authentication');
+var {authenticate_team_member} = require('./../middleware/authentication');
 var userController = require('./../controllers/user-controller');
 
 
@@ -19,5 +20,10 @@ router.put('/' ,authenticate_user ,userController.update_user);
 
 // DELETE AUTH (DESTROY USER SESSION - SIGN OUT)
 router.delete('/auth' ,authenticate_user ,userController.destroy_user);
+// USER-TEAM REQUESTS
+
+// POST REMOVE TEAM
+router.post('/remove_team' , authenticate_team_member ,userController.remove_team);
+
 
 module.exports = router;

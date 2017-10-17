@@ -1,4 +1,5 @@
 var User = require('./../models/user-model');
+var Team = require('./../models/team-model');
 const _  = require('lodash');
 
 exports.create_user = function(req,res) {
@@ -41,5 +42,19 @@ exports.destroy_user = function(req, res) {
     res.send('Session destroyed successfully');
   }).catch(e => {
     res.status(401).send(e);
+  })
+}
+
+exports.remove_team = function(req, res) {
+  var userData = req.user;
+  User.removeTeam(req.body.team_id, userData._id)
+  .then(savedUser => {
+    return Team.removeMember(req.body.team_id , userData._id);
+  })
+  .then(savedTeam => {
+    res.send(savedUser);
+  })
+  .catch(e => {
+    res.status(400).send(e);
   })
 }

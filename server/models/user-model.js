@@ -21,6 +21,7 @@ var UserSchema = new Schema({
   email: {
     type: String,
     required : true,
+    unique : true,
     validate : {
       validator : validator.isEmail,
       message  : '{VALUE} is not valid email'
@@ -32,8 +33,9 @@ var UserSchema = new Schema({
     minlenght: 6
   },
   teams : [{
-    team_id : String,
-    role    : String
+    team_id : ObjectId,
+    role  : String,
+    _id : false
   }],
   bio : {
     type: String,
@@ -131,7 +133,6 @@ UserSchema.statics.validateUser = function({email,password}) {
     if (!user) {
       return Promise.reject();
     }
-
     return new Promise((resolve, reject) => {
       bcrypt.compare(password.toString(), user.password, (err, res) => {
         if (res) {
@@ -179,6 +180,31 @@ UserSchema.statics.assignTeam = function(teamData,role) {
       return Promise.reject(e);
     })
   }, e => {
+    return Promise.reject(e);
+  })
+}
+UserSchema.statics.addTeam = function(team_id, user_id) {
+  var User = this;
+  return User.findOneAndUpdate({ _id : user_id }, { $push : {
+    teams: { team_id } }
+  }, { upsert : true  })
+  .then(savedUser => {
+    return savedUser;
+  })
+  .catch(e => {
+    return Promise.reject(e);
+  })
+}
+
+UserSchema.statics.removeTeam = function(team_id, user_id) {
+  var User = this;
+  return User.findOneAndUpdate({_id : user_id} , { $pull : {
+    teams : { team_id } }
+  })
+  .then(savedUser => {
+    return savedUser;
+  })
+  .catch(e => {
     return Promise.reject(e);
   })
 }
