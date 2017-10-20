@@ -32,6 +32,10 @@ var UserSchema = new Schema({
     required : true,
     minlenght: 6
   },
+  friends: [{
+    user_id: ObjectId,
+    _id: false
+  }],
   teams : [{
     team_id : ObjectId,
     role  : String,
@@ -144,7 +148,23 @@ UserSchema.statics.validateUser = function({email,password}) {
     });
   })
 };
-
+UserSchema.statics.addFriend = function(recieverId, senderId) {
+  var User = this;
+  return User.findOneAndUpdate({_id : recieverId }, { $addToSet :
+    { friends : { user_id : senderId } }
+  })
+  .then(recieverModel => {
+    return User.findOneAndUpdate({_id : senderId}, { $addToSet :
+      { friends : { user_id : recieverId }}
+    })
+    .then(senderModel => {
+      return senderModel
+    })
+  })
+  .catch(e => {
+    return Promise.reject(e);
+  })
+}
 UserSchema.statics.findByToken = function(token) {
   var user = this;
   try {

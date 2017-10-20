@@ -45,6 +45,19 @@ exports.destroy_user = function(req, res) {
   })
 }
 
+exports.add_friend = function(req, res) {
+  var senderModel = req.user;
+  var recieverId = req.body.user_id;
+  User.addFriend(recieverId ,senderModel._id)
+  .then(senderModel => {
+    res.send('User added successfully');
+  })
+  .catch(e => {
+    res.status(400).send();
+  })
+
+}
+
 exports.remove_team = function(req, res) {
   var userData = req.user;
   User.removeTeam(req.body.team_id, userData._id)

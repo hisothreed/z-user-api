@@ -25,5 +25,7 @@ router.delete('/auth' ,authenticate_user ,userController.destroy_user);
 // POST REMOVE TEAM
 router.post('/remove_team' , authenticate_team_member ,userController.remove_team);
 
+// POST ADD FRIEND
+router.post('/add_friend', authenticate_user ,userController.add_friend);
 
 module.exports = router;
