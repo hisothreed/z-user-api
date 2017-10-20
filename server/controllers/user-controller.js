@@ -58,6 +58,19 @@ exports.add_friend = function(req, res) {
 
 }
 
+exports.remove_friend = function(req, res) {
+  var senderModel = req.user;
+  var friendId = req.body.user_id;
+  User.removeFriend(friendId ,senderModel._id)
+  .then(message => {
+    res.send(message);
+  })
+  .catch(e => {
+    res.status(400).send(e);
+  })
+
+}
+
 exports.remove_team = function(req, res) {
   var userData = req.user;
   User.removeTeam(req.body.team_id, userData._id)

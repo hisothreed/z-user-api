@@ -228,6 +228,23 @@ UserSchema.statics.removeTeam = function(team_id, user_id) {
     return Promise.reject(e);
   })
 }
+UserSchema.statics.removeFriend = function(friend_id , sender_id) {
+  var User = this;
+  return User.findOneAndUpdate({ _id : sender_id} , { $pull :{
+    friends : { user_id : friend_id } }
+  })
+  .then(savedUser => {
+    return User.findOneAndUpdate({ _id : friend_id }, { $pull :{
+      friends : { user_id : sender_id } }
+    })
+    .then(savedFriend => {
+      return 'Friend removed successfully';
+    })
+  })
+  .catch(e => {
+    return Promise.reject(e);
+  })
+}
 // INSTANCE METHODS (METHODS)
 UserSchema.methods.generateAuthToken = function() {
   var user = this;

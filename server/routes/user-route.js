@@ -28,4 +28,7 @@ router.post('/remove_team' , authenticate_team_member ,userController.remove_tea
 // POST ADD FRIEND
 router.post('/add_friend', authenticate_user ,userController.add_friend);
 
+// DELETE FRIEND
+router.delete('/remove_friend', authenticate_user, userController.remove_friend)
+
 module.exports = router;

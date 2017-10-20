@@ -55,7 +55,6 @@ exports.kick_member = function(req, res) {
   var senderData  = req.user;
   var member_id   = req.body.member_id;
   var team_id     = req.params.team_id;
-  console.log(member_id,team_id);
   Team.removeMember(team_id ,member_id)
   .then(savedTeam => {
     return User.removeTeam(team_id , member_id);
