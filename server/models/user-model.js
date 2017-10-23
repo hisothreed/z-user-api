@@ -7,8 +7,6 @@ const jwt       = require('jsonwebtoken');
 const config    = require('./../config/config')
 const ObjectId  = Schema.Types.ObjectId;
 
-
-
 var UserSchema = new Schema({
   first_name : {
     type: String,
@@ -40,6 +38,13 @@ var UserSchema = new Schema({
     team_id : ObjectId,
     role  : String,
     _id : false
+  }],
+  events : [{
+    event_id : ObjectId,
+    event_type : {
+      type: String,
+      enum : ['user','team']
+    }
   }],
   bio : {
     type: String,
@@ -165,85 +170,115 @@ UserSchema.statics.addFriend = function(recieverId, senderId) {
     return Promise.reject(e);
   })
 }
-UserSchema.statics.findByToken = function(token) {
-  var user = this;
-  try {
-    var decoded = jwt.verify(token, config.JWT_SECRET);
-  } catch(err) {
-    return Promise.reject();
-  }
-  return user.findOne({
-    _id : decoded._id,
-    'tokens.token' : token
-  })
-}
-
-UserSchema.statics.updateUserInfo = function(userData) {
-  var User = this;
-  var options = {_id , email , first_name , last_name, password} = userData;
-  return User.findOneAndUpdate({_id},options)
-  .then(doc => {
-    return _.pick(options ,['email','first_name','last_name']);
-  }).catch(e => {
-    return Promise.reject(e);
-  })
-}
-UserSchema.statics.assignTeam = function(teamData,role) {
-  var User = this;
-  return User.findOne({ _id : teamData.creator_id })
-  .then(user => {
-    user.teams.push({ team_id : teamData._id , role : role })
-    return user.save()
-    .then(updated_user => {
-      return teamData;
+// UserSchema.statics.addEvent = function(event_model, user_id) {
+//   var User = this;
+//   return User.findOneAndUpdate({_id : user_id }, { $addToSet :
+//     { events : { event_id : event_model._id } }
+//   })
+//   .then(savedUser => {
+//     return { message : 'event saved to user' };
+//   })
+//   .catch(e => {
+//     return Promise.reject(e);
+//   })
+// }
+UserSchema.statics = {
+  findByToken (token) {
+    var user = this;
+    try {
+      var decoded = jwt.verify(token, config.JWT_SECRET);
+    } catch(err) {
+      return Promise.reject();
+    }
+    return user.findOne({
+      _id : decoded._id,
+      'tokens.token' : token
+    })
+  },
+  listUserFriends(user_id) {
+    var User = this;
+    return User.findOne({ _id : user_id })
+    .then(user => {
+      return user.friends;
+    })
+    .catch(e => {
+      return Promise.reject(e);
+    })
+  },
+  getUserInfo(user_id) {
+    var User = this;
+    return User.findOne({_id : user_id});
+  },
+  listUsers() {
+    var User = this;
+    return User.find();
+  },
+  updateUserInfo(userData) {
+    var User = this;
+    var options = {_id , email , first_name , last_name, password} = userData;
+    return User.findOneAndUpdate({_id},options)
+    .then(doc => {
+      return _.pick(options ,['email','first_name','last_name']);
+    }).catch(e => {
+      return Promise.reject(e);
+    })
+  },
+  assignTeam(teamData,role) {
+    var User = this;
+    return User.findOne({ _id : teamData.creator_id })
+    .then(user => {
+      user.teams.push({ team_id : teamData._id , role : role })
+      return user.save()
+      .then(updated_user => {
+        return teamData;
+      }, e => {
+        return Promise.reject(e);
+      })
     }, e => {
       return Promise.reject(e);
     })
-  }, e => {
-    return Promise.reject(e);
-  })
-}
-UserSchema.statics.addTeam = function(team_id, user_id) {
-  var User = this;
-  return User.findOneAndUpdate({ _id : user_id }, { $push : {
-    teams: { team_id } }
-  }, { upsert : true  })
-  .then(savedUser => {
-    return savedUser;
-  })
-  .catch(e => {
-    return Promise.reject(e);
-  })
-}
-
-UserSchema.statics.removeTeam = function(team_id, user_id) {
-  var User = this;
-  return User.findOneAndUpdate({_id : user_id} , { $pull : {
-    teams : { team_id } }
-  })
-  .then(savedUser => {
-    return savedUser;
-  })
-  .catch(e => {
-    return Promise.reject(e);
-  })
-}
-UserSchema.statics.removeFriend = function(friend_id , sender_id) {
-  var User = this;
-  return User.findOneAndUpdate({ _id : sender_id} , { $pull :{
-    friends : { user_id : friend_id } }
-  })
-  .then(savedUser => {
-    return User.findOneAndUpdate({ _id : friend_id }, { $pull :{
-      friends : { user_id : sender_id } }
+  },
+  addTeam(team_id, user_id) {
+    var User = this;
+    return User.findOneAndUpdate({ _id : user_id }, { $push : {
+      teams: { team_id } }
+    }, { upsert : true  })
+    .then(savedUser => {
+      return savedUser;
     })
-    .then(savedFriend => {
-      return 'Friend removed successfully';
+    .catch(e => {
+      return Promise.reject(e);
     })
-  })
-  .catch(e => {
-    return Promise.reject(e);
-  })
+  },
+  removeTeam(team_id, user_id) {
+    var User = this;
+    return User.findOneAndUpdate({_id : user_id} , { $pull : {
+      teams : { team_id } }
+    })
+    .then(savedUser => {
+      return savedUser;
+    })
+    .catch(e => {
+      return Promise.reject(e);
+    })
+  },
+  removeFriend(friend_id , sender_id) {
+    var User = this;
+    return User.findOneAndUpdate({ _id : sender_id} , { $pull :{
+      friends : { user_id : friend_id } }
+    })
+    .then(savedUser => {
+      return User.findOneAndUpdate({ _id : friend_id }, { $pull :{
+        friends : { user_id : sender_id } }
+      })
+      .then(savedFriend => {
+        return 'Friend removed successfully';
+      })
+    })
+    .catch(e => {
+      return Promise.reject(e);
+    })
+  }
 }
 // INSTANCE METHODS (METHODS)
 UserSchema.methods.generateAuthToken = function() {

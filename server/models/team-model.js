@@ -7,6 +7,8 @@ const jwt       = require('jsonwebtoken');
 const config    = require('./../config/config')
 const ObjectId  = Schema.Types.ObjectId
 
+var User = require('./user-model');
+
 var TeamSchema = new Schema({
   team_name : {
     type: String,
@@ -54,8 +56,31 @@ TeamSchema.pre('update',function (next) {
   }
 })
 
+TeamSchema.pre('remove',function (next) {
+  var team = this;
+  var members = [];
+  team.members.forEach(member => {
+    members.push(member.member_id);
+  })
+  User.updateMany({ _id : { $in : members }}, { $pull : { teams : { team_id : team._id } } })
+  .then(result => {
+    next();
+  })
+  .catch(e => {
+    return Promise.reject(e);
+  })
+})
+
 
 TeamSchema.statics = {
+  listTeams() {
+    var Team = this;
+    return Team.find();
+  },
+  getTeamInfo(team_id) {
+    var Team = this;
+    return Team.findOne({ _id : team_id })
+  },
   createTeam(teamData) {
     var Team = new this(teamData);
     return Team.save()
@@ -66,9 +91,33 @@ TeamSchema.statics = {
       return Promise.reject(e);
     })
   },
-  validateUserMembership(user_id) {
+  updateTeam(team_id ,reqBody) {
     var Team = this;
-    return Team.findOne({ members : { member_id : user_id } })
+    var options = { name , description } = reqBody;
+    return Team.findOneAndUpdate({_id : team_id}, options)
+    .then(doc => {
+      return doc
+    })
+    .catch(e => {
+      return Promise.reject(e);
+    })
+  },
+  destory_team(team_id) {
+    var Team = this;
+    return Team.findOne({ _id : team_id })
+    .then(teamPointer => {
+      return teamPointer.remove()
+      .then(res => {
+        return 'Team removed'
+      })
+    })
+    .catch(e => {
+      return Promise.reject(e);
+    })
+  },
+  validateUserMembership(user_id, team_id) {
+    var Team = this;
+    return Team.findOne({ _id : team_id ,members : { member_id : user_id } })
     .then(res => {
       return res;
     })
@@ -76,7 +125,7 @@ TeamSchema.statics = {
   addMember(user_id, team_id) {
     var Team = this;
     return Team.findOneAndUpdate({ _id : team_id}, { $push: {
-      members: { member_id : user_id.toHexString() } }
+      members: { member_id : user_id } }
     })
     .then(savedTeam => {
       return savedTeam;

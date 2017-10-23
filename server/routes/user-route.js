@@ -15,6 +15,13 @@ router.post('/auth' ,userController.auth_user);
 // GET USER INFO (READ USER INFO)
 router.get('/:id' ,authenticate_user ,userController.get_user);
 
+// GET USERS
+router.get('/list_users' , authenticate_user ,userController.list_users);
+
+// GET USERS
+router.get('/:id/list_friends' , authenticate_user ,userController.list_user_friends);
+
+
 // PUT AUTH (EDIT USER - UPDATE USER)
 router.put('/' ,authenticate_user ,userController.update_user);
 

@@ -23,8 +23,36 @@ exports.auth_user = function(req,res) {
   });
 }
 
+exports.list_user_friends = function(req, res) {
+  var user_id = req.params.id;
+  User.listUserFriends(user_id)
+  .then(friends => {
+    res.send({ friends })
+  })
+  .catch(e => {
+    res.status(404).send(e);
+  })
+}
+
+exports.list_users = function(req, res) {
+  User.listUsers()
+  .then(docs => {
+    res.send({ users : docs });
+  })
+  .catch(e => {
+    res.status(400).send(e);
+  })
+}
+
 exports.get_user = function(req,res) {
-  res.send({ name: 'name test' , _id : req.params.id });
+  var user_id = req.params.id;
+  User.getUserInfo(user_id)
+  .then(user => {
+    res.send(user)
+  })
+  .catch(e => {
+    res.status(404).send(e);
+  })
 }
 
 exports.update_user = function(req, res) {
@@ -38,7 +66,8 @@ exports.update_user = function(req, res) {
 }
 
 exports.destroy_user = function(req, res) {
-  req.user.destroySessionToken(req.token).then(userDoc => {
+  req.user.destroySessionToken(req.token)
+  .then(userDoc => {
     res.send('Session destroyed successfully');
   }).catch(e => {
     res.status(401).send(e);

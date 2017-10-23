@@ -37,8 +37,8 @@ exports.add_member = function(req, res) {
 }
 exports.join_team = function(req, res) {
   var userData = req.user;
-  var teamId   = req.params.team_id;
-  Team.addMember(userData._id, teamId)
+  var team_id   = req.body.team_id;
+  Team.addMember(userData._id, team_id)
   .then(savedTeam => {
     return User.addTeam(savedTeam._id , userData._id);
   })
@@ -51,10 +51,54 @@ exports.join_team = function(req, res) {
   })
 }
 
+exports.delete_team = function(req, res) {
+  var team_id = req.params.team_id;
+  Team.destory_team(team_id)
+  .then(result => {
+    res.send({ message : result });
+  })
+  .catch(e => {
+    res.status(400).send(e);
+  })
+}
+
+exports.list_teams = function(req, res) {
+  Team.listTeams()
+  .then(docs => {
+    res.send({ teams : docs })
+  })
+  .catch(e => {
+    res.status(400).send(e);
+  })
+}
+
+exports.get_team = function(req , res) {
+  var team_id = req.params.team_id;
+  Team.getTeamInfo(team_id)
+  .then(doc => {
+    res.send(doc)
+  })
+  .catch(e => {
+    res.status(400).send(e);
+  })
+}
+
+exports.edit_team = function(req, res) {
+  var team_id = req.params.team_id;
+  Team.updateTeam(team_id ,req.body)
+  .then(doc => {
+    res.send({ message : 'Team updated successfully ', team : doc })
+  })
+  .catch(e => {
+    res.status(400).send(e);
+  })
+
+}
+
 exports.kick_member = function(req, res) {
   var senderData  = req.user;
   var member_id   = req.body.member_id;
-  var team_id     = req.params.team_id;
+  var team_id     = req.body.team_id;
   Team.removeMember(team_id ,member_id)
   .then(savedTeam => {
     return User.removeTeam(team_id , member_id);
