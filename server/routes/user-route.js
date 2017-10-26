@@ -18,19 +18,20 @@ router.get('/:id' ,authenticate_user ,userController.get_user);
 // GET USERS
 router.get('/list_users' , authenticate_user ,userController.list_users);
 
-// GET USERS
+// GET FRIENDS
 router.get('/:id/list_friends' , authenticate_user ,userController.list_user_friends);
 
+// GET SCHEDULES
+router.get('/:id/list_schedules' , authenticate_user ,userController.list_user_schedules);
+
+// GET USER TEAMS
+router.get('/:user_id/list_teams' , authenticate_user ,userController.list_user_teams);
 
 // PUT AUTH (EDIT USER - UPDATE USER)
 router.put('/' ,authenticate_user ,userController.update_user);
 
 // DELETE AUTH (DESTROY USER SESSION - SIGN OUT)
 router.delete('/auth' ,authenticate_user ,userController.destroy_user);
-// USER-TEAM REQUESTS
-
-// POST REMOVE TEAM
-router.post('/remove_team' , authenticate_team_member ,userController.remove_team);
 
 // POST ADD FRIEND
 router.post('/add_friend', authenticate_user ,userController.add_friend);

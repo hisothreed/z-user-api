@@ -1,5 +1,6 @@
 var User = require('./../models/user-model');
 var Team = require('./../models/team-model');
+var Schedule = require('./../models/schedule-model');
 const _  = require('lodash');
 
 exports.create_user = function(req,res) {
@@ -34,6 +35,17 @@ exports.list_user_friends = function(req, res) {
   })
 }
 
+exports.list_user_schedules = function(req, res) {
+  var user_id = req.params.id;
+  Schedule.listUserSchedules(user_id)
+  .then(schedules => {
+    res.send({ schedules })
+  })
+  .catch(e => {
+    res.status(404).send(e);
+  })
+}
+
 exports.list_users = function(req, res) {
   User.listUsers()
   .then(docs => {
@@ -52,6 +64,17 @@ exports.get_user = function(req,res) {
   })
   .catch(e => {
     res.status(404).send(e);
+  })
+}
+
+exports.list_user_teams = function(req, res) {
+  var user_id = req.params.user_id;
+  Team.listUserTeams(user_id)
+  .then(docs => {
+    res.send({ teams : docs })
+  })
+  .catch(e => {
+    res.status(400).send(e);
   })
 }
 
@@ -98,18 +121,4 @@ exports.remove_friend = function(req, res) {
     res.status(400).send(e);
   })
 
-}
-
-exports.remove_team = function(req, res) {
-  var userData = req.user;
-  User.removeTeam(req.body.team_id, userData._id)
-  .then(savedUser => {
-    return Team.removeMember(req.body.team_id , userData._id);
-  })
-  .then(savedTeam => {
-    res.send(savedUser);
-  })
-  .catch(e => {
-    res.status(400).send(e);
-  })
 }

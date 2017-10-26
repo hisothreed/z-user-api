@@ -1,5 +1,6 @@
 var Team = require('./../models/team-model');
 var User = require('./../models/user-model');
+var Schedule = require('./../models/schedule-model');
 const _  = require('lodash');
 
 
@@ -11,10 +12,9 @@ exports.create_team = function(req ,res ) {
   teamData.owner_id   = userData._id;
   teamData.creator_id = userData._id;
   teamData.members = [{member_id : userData._id}]
-  Team.createTeam(teamData).then(newTeam =>{
-    return User.assignTeam(newTeam,'creator');
-  }).then(userData => {
-    res.send(userData)
+  Team.createTeam(teamData)
+  .then(newTeam =>{
+    res.send(newTeam)
   }).catch(e => {
     res.status(400).send(e);
   })
@@ -25,26 +25,19 @@ exports.add_member = function(req, res) {
   var teamData = req.team;
   Team.addMember(req.body.member_id, teamData)
   .then(savedTeam => {
-    return User.addTeam(savedTeam._id , req.body.member_id);
-  })
-  .then(savedUser => {
-    var resUserModel = _.pick(savedUser , ['first_name','last_name','email','updated_at'])
-    res.send({ message: 'User added successfully', user_model : resUserModel })
+    res.send({ message: 'User added successfully', team_model : savedTeam })
   })
   .catch(e => {
     res.status(400).send(e);
   })
 }
+
 exports.join_team = function(req, res) {
   var userData = req.user;
   var team_id   = req.body.team_id;
   Team.addMember(userData._id, team_id)
   .then(savedTeam => {
-    return User.addTeam(savedTeam._id , userData._id);
-  })
-  .then(savedUser => {
-    var resUserModel = _.pick(savedUser , ['first_name','last_name','email','updated_at','teams'])
-    res.send({ message: 'User added successfully', user_model : resUserModel })
+    res.send({ message: 'User added successfully', team_model : savedTeam })
   })
   .catch(e => {
     res.status(400).send(e);
@@ -56,6 +49,17 @@ exports.delete_team = function(req, res) {
   Team.destory_team(team_id)
   .then(result => {
     res.send({ message : result });
+  })
+  .catch(e => {
+    res.status(400).send(e);
+  })
+}
+
+exports.list_team_schedules = function(req, res) {
+  var team_id = req.params.team_id;
+  Schedule.listTeamSchedules(team_id)
+  .then(docs => {
+    res.send({ schedules : docs })
   })
   .catch(e => {
     res.status(400).send(e);
@@ -101,11 +105,7 @@ exports.kick_member = function(req, res) {
   var team_id     = req.body.team_id;
   Team.removeMember(team_id ,member_id)
   .then(savedTeam => {
-    return User.removeTeam(team_id , member_id);
-  })
-  .then(savedUser => {
-    var resUserModel = _.pick(savedUser , ['first_name','last_name','email','updated_at','teams'])
-    res.send({ message: 'User removed successfully', user_model : resUserModel })
+    res.send({ message: 'User removed successfully', team_model : savedTeam })
   })
   .catch(e => {
     res.status(400).send(e);

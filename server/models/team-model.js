@@ -73,6 +73,35 @@ TeamSchema.pre('remove',function (next) {
 
 
 TeamSchema.statics = {
+  validateById(team_id) {
+    var Team = this;
+    return Team.findOne({_id : team_id})
+    .then(team => {
+      if (!team) {
+        return Promise.reject();
+      }
+      return;
+    })
+    .catch(e => {
+      return Promise.reject();
+    })
+  },
+  addSchedule(scheduleModel) {
+    var Team = this;
+    return Team.findOneAndUpdate({ _id : scheduleModel.parent_id }, { $addToSet : {
+      schedules : { schedule_id : scheduleModel._id ,  schedule_type : scheduleModel.parent_type } }
+    })
+    .then(savedTeam => {
+      return savedTeam;
+    })
+    .catch(e => {
+      return Promise.reject(e);
+    })
+  },
+  listUserTeams(user_id) {
+    var Team = this;
+    return Team.find({ members : { member_id : user_id } })
+  },
   listTeams() {
     var Team = this;
     return Team.find();

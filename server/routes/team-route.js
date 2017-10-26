@@ -16,6 +16,8 @@ router.delete('/:team_id',authenticate_team_member ,teamController.delete_team);
 
 router.get('/list_teams', authenticate_user ,teamController.list_teams);
 
+router.get('/:team_id/list_schedules', authenticate_user ,teamController.list_team_schedules);
+
 router.get('/:team_id', authenticate_user ,teamController.get_team);
 
 router.put('/:team_id', authenticate_team_member ,teamController.edit_team);

@@ -34,18 +34,6 @@ var UserSchema = new Schema({
     user_id: ObjectId,
     _id: false
   }],
-  teams : [{
-    team_id : ObjectId,
-    role  : String,
-    _id : false
-  }],
-  events : [{
-    event_id : ObjectId,
-    event_type : {
-      type: String,
-      enum : ['user','team']
-    }
-  }],
   bio : {
     type: String,
     required : false
@@ -135,41 +123,7 @@ UserSchema.pre('update',function (next) {
 })
 
 // CLASS METHODS (STATICS)
-UserSchema.statics.validateUser = function({email,password}) {
-  var User = this;
 
-  return User.findOne({email}).then((user) => {
-    if (!user) {
-      return Promise.reject();
-    }
-    return new Promise((resolve, reject) => {
-      bcrypt.compare(password.toString(), user.password, (err, res) => {
-        if (res) {
-          resolve(user);
-        } else {
-          reject({message: 'Wrong password',status : '400'});
-        }
-      });
-    });
-  })
-};
-UserSchema.statics.addFriend = function(recieverId, senderId) {
-  var User = this;
-  return User.findOneAndUpdate({_id : recieverId }, { $addToSet :
-    { friends : { user_id : senderId } }
-  })
-  .then(recieverModel => {
-    return User.findOneAndUpdate({_id : senderId}, { $addToSet :
-      { friends : { user_id : recieverId }}
-    })
-    .then(senderModel => {
-      return senderModel
-    })
-  })
-  .catch(e => {
-    return Promise.reject(e);
-  })
-}
 // UserSchema.statics.addEvent = function(event_model, user_id) {
 //   var User = this;
 //   return User.findOneAndUpdate({_id : user_id }, { $addToSet :
@@ -183,6 +137,54 @@ UserSchema.statics.addFriend = function(recieverId, senderId) {
 //   })
 // }
 UserSchema.statics = {
+  validateUser({email,password}) {
+    var User = this;
+
+    return User.findOne({email}).then((user) => {
+      if (!user) {
+        return Promise.reject();
+      }
+      return new Promise((resolve, reject) => {
+        bcrypt.compare(password.toString(), user.password, (err, res) => {
+          if (res) {
+            resolve(user);
+          } else {
+            reject({message: 'Wrong password',status : '400'});
+          }
+        });
+      });
+    })
+  },
+  validateById(user_id) {
+    var User = this;
+    return User.findOne({_id : user_id})
+    .then(user => {
+      if (!user) {
+        return Promise.reject();
+      }
+      return user;
+    })
+    .catch(e => {
+      return Promise.reject(e);
+    })
+  },
+  addFriend(recieverId, senderId) {
+    var User = this;
+    return User.findOneAndUpdate({_id : recieverId }, { $addToSet :
+      { friends : { user_id : senderId } }
+    })
+    .then(recieverModel => {
+      return User.findOneAndUpdate({_id : senderId}, { $addToSet :
+        { friends : { user_id : recieverId }}
+      })
+      .then(senderModel => {
+        return senderModel
+      })
+    })
+    .catch(e => {
+      return Promise.reject(e);
+    })
+  },
   findByToken (token) {
     var user = this;
     try {
@@ -220,45 +222,6 @@ UserSchema.statics = {
     .then(doc => {
       return _.pick(options ,['email','first_name','last_name']);
     }).catch(e => {
-      return Promise.reject(e);
-    })
-  },
-  assignTeam(teamData,role) {
-    var User = this;
-    return User.findOne({ _id : teamData.creator_id })
-    .then(user => {
-      user.teams.push({ team_id : teamData._id , role : role })
-      return user.save()
-      .then(updated_user => {
-        return teamData;
-      }, e => {
-        return Promise.reject(e);
-      })
-    }, e => {
-      return Promise.reject(e);
-    })
-  },
-  addTeam(team_id, user_id) {
-    var User = this;
-    return User.findOneAndUpdate({ _id : user_id }, { $push : {
-      teams: { team_id } }
-    }, { upsert : true  })
-    .then(savedUser => {
-      return savedUser;
-    })
-    .catch(e => {
-      return Promise.reject(e);
-    })
-  },
-  removeTeam(team_id, user_id) {
-    var User = this;
-    return User.findOneAndUpdate({_id : user_id} , { $pull : {
-      teams : { team_id } }
-    })
-    .then(savedUser => {
-      return savedUser;
-    })
-    .catch(e => {
       return Promise.reject(e);
     })
   },

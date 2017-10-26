@@ -9,14 +9,16 @@ mongoose.Promise = Promise;
 var app = express();
 
 
-var user = require('./routes/user-route.js');
-var team = require('./routes/team-route.js');
+var user     = require('./routes/user-route.js');
+var team     = require('./routes/team-route.js');
+var schedule = require('./routes/schedule-route.js');
 
 app.use(bodyParser.json());
 
 
 app.use('/z_user', user);
 app.use('/z_team', team);
+app.use('/z_schedule', schedule);
 
 app.listen(config.PORT , () => {
   console.log('server is running at', config.PORT);
