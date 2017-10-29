@@ -56,22 +56,6 @@ TeamSchema.pre('update',function (next) {
   }
 })
 
-TeamSchema.pre('remove',function (next) {
-  var team = this;
-  var members = [];
-  team.members.forEach(member => {
-    members.push(member.member_id);
-  })
-  User.updateMany({ _id : { $in : members }}, { $pull : { teams : { team_id : team._id } } })
-  .then(result => {
-    next();
-  })
-  .catch(e => {
-    return Promise.reject(e);
-  })
-})
-
-
 TeamSchema.statics = {
   validateById(team_id) {
     var Team = this;
@@ -86,18 +70,6 @@ TeamSchema.statics = {
       return Promise.reject();
     })
   },
-  addSchedule(scheduleModel) {
-    var Team = this;
-    return Team.findOneAndUpdate({ _id : scheduleModel.parent_id }, { $addToSet : {
-      schedules : { schedule_id : scheduleModel._id ,  schedule_type : scheduleModel.parent_type } }
-    })
-    .then(savedTeam => {
-      return savedTeam;
-    })
-    .catch(e => {
-      return Promise.reject(e);
-    })
-  },
   listUserTeams(user_id) {
     var Team = this;
     return Team.find({ members : { member_id : user_id } })
@@ -109,6 +81,15 @@ TeamSchema.statics = {
   getTeamInfo(team_id) {
     var Team = this;
     return Team.findOne({ _id : team_id })
+    .then(team => {
+      if (!team) {
+        return Promise.reject({ message : 'team_id is not valid' })
+      }
+      return team;
+    })
+    .catch(e => {
+      return Promise.reject(e);
+    })
   },
   createTeam(teamData) {
     var Team = new this(teamData);
@@ -123,7 +104,7 @@ TeamSchema.statics = {
   updateTeam(team_id ,reqBody) {
     var Team = this;
     var options = { name , description } = reqBody;
-    return Team.findOneAndUpdate({_id : team_id}, options)
+    return Team.findOneAndUpdate({_id : team_id}, options, {new : true})
     .then(doc => {
       return doc
     })
@@ -155,7 +136,7 @@ TeamSchema.statics = {
     var Team = this;
     return Team.findOneAndUpdate({ _id : team_id}, { $push: {
       members: { member_id : user_id } }
-    })
+    }, {new: true})
     .then(savedTeam => {
       return savedTeam;
     })
@@ -168,7 +149,7 @@ TeamSchema.statics = {
 
     return Team.findOneAndUpdate({ _id : team_id } , { $pull : {
       members : { member_id : user_id } }
-    })
+    }, {new : true})
     .then(savedTeam => {
       return savedTeam;
     })

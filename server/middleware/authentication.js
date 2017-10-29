@@ -48,7 +48,7 @@ var authenticate_schedule_creator = function(req, res, next) {
     }
     req.user  = user;
     req.token = token;
-    return Schedule.validateUserOwnership(user._id, req.body.schedule_id)
+    return Schedule.validateUserOwnership(user._id, req.body.schedule_id || req.params.schedule_id)
   })
   .then(schedule => {
     if (!schedule) {

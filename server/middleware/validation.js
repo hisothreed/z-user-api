@@ -2,7 +2,6 @@ var User = require('./../models/user-model');
 var Team = require('./../models/team-model');
 
 var validate_parent = function(parent_type, parent_id) {
-  console.log('inside');
   if (parent_type === 'user' && parent_id) {
     return User.validateById(parent_id)
     .then((user) => {

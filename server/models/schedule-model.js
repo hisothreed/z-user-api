@@ -30,7 +30,9 @@ var scheduleSchema = new Schema({
       type: String,
       enum: ['team','user']
     },
-    participant_id : ObjectId,
+    participant_id : {
+      type: ObjectId
+    },
     _id : false
   }],
   creator_id : {
@@ -126,6 +128,24 @@ scheduleSchema.statics = {
     var Schedule = this;
     return Schedule.findOne({ creator_id : user_id , _id : schedule_id })
   },
+  joinSchedule(schedule_id, {participant_id , type}) {
+    var Schedule = this;
+    return Schedule.findOneAndUpdate({ _id : schedule_id } , { $addToSet : {
+       participants : {  participant_id , type } }
+     })
+     .then(doc => {
+       return doc;
+     })
+     .catch(e => {
+       return Promise.reject(e)
+     })
+  },
+  kickParticipant(schedule_id, participant_id) {
+    var Schedule = this;
+    return Schedule.findOneAndUpdate({ _id : schedule_id}, { $pull : {
+       participants : { participant_id } }
+     })
+  },
   listSchedules() {
     var Schedule = this;
     return Schedule.find();
@@ -146,6 +166,10 @@ scheduleSchema.statics = {
     var Schedule = this;
     var options  = schedule_info;
     return Schedule.findOneAndUpdate({ _id : schedule_id }, options)
+  },
+  deleteSchedule(schedule_id) {
+    var Schedule = this;
+    return Schedule.deleteOne({ _id : schedule_id })
   }
 }
 

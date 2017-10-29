@@ -79,8 +79,8 @@ exports.list_teams = function(req, res) {
 exports.get_team = function(req , res) {
   var team_id = req.params.team_id;
   Team.getTeamInfo(team_id)
-  .then(doc => {
-    res.send(doc)
+  .then(team_model => {
+    res.send({ team_model })
   })
   .catch(e => {
     res.status(400).send(e);

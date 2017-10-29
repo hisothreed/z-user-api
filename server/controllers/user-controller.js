@@ -4,10 +4,10 @@ var Schedule = require('./../models/schedule-model');
 const _  = require('lodash');
 
 exports.create_user = function(req,res) {
-  var userData = _.pick(req.body,['email','password']);
+  var userData = _.pick(req.body,['email','password','first_name','last_name','bio','platform','region']);
   var user = new User(userData);
   user.save().then((userModel) => {
-    res.send(_.pick(userModel,['email','id']));
+    res.send(_.pick(userModel,['email','id','first_name','last_name','region','platform']));
   }).catch((e) => {
     res.status(400).send(e);
   })
@@ -17,15 +17,18 @@ exports.auth_user = function(req,res) {
   var userData = _.pick(req.body,['email','password']);
   User.validateUser(userData).then(user => {
     return user.generateAuthToken();
-  }).then(token => {
-    res.send({ token });
+  }).then(({token , savedUser}) => {
+    var user_model = savedUser
+    user_model.password = undefined;
+    user_model.tokens = undefined;
+    res.send({ token  , user_model  });
   }).catch(e => {
     res.status(400).send(e)
   });
 }
 
 exports.list_user_friends = function(req, res) {
-  var user_id = req.params.id;
+  var user_id = req.params.user_id;
   User.listUserFriends(user_id)
   .then(friends => {
     res.send({ friends })
@@ -36,7 +39,7 @@ exports.list_user_friends = function(req, res) {
 }
 
 exports.list_user_schedules = function(req, res) {
-  var user_id = req.params.id;
+  var user_id = req.params.user_id;
   Schedule.listUserSchedules(user_id)
   .then(schedules => {
     res.send({ schedules })
@@ -57,10 +60,12 @@ exports.list_users = function(req, res) {
 }
 
 exports.get_user = function(req,res) {
-  var user_id = req.params.id;
+  var user_id = req.params.user_id;
   User.getUserInfo(user_id)
-  .then(user => {
-    res.send(user)
+  .then(user_model => {
+    user_model.password = undefined;
+    user_model.tokens   = undefined;
+    res.send({user_model})
   })
   .catch(e => {
     res.status(404).send(e);
@@ -79,10 +84,13 @@ exports.list_user_teams = function(req, res) {
 }
 
 exports.update_user = function(req, res) {
-  var userData = _.pick(req.body, ['email','password','first_name','last_name'])
-  userData._id = req.user._id;
-  User.updateUserInfo(userData).then((userModel) => {
-    res.send(userModel)
+  var userData = req.body;
+  var user_id  = req.user._id;
+  User.updateUserInfo(user_id,userData)
+  .then((user_model) => {
+    user_model.password = undefined;
+    user_model.tokens   = undefined;
+    res.send({message : 'user updated successfully' , user_model})
   }).catch(e => {
     res.status(400).send(e);
   })
@@ -99,10 +107,12 @@ exports.destroy_user = function(req, res) {
 
 exports.add_friend = function(req, res) {
   var senderModel = req.user;
-  var recieverId = req.body.user_id;
+  var recieverId  = req.params.user_id;
   User.addFriend(recieverId ,senderModel._id)
-  .then(senderModel => {
-    res.send('User added successfully');
+  .then(user_model => {
+    user_model.password = undefined;
+    user_model.tokens   = undefined;
+    res.send({message : 'User added successfully', user_model });
   })
   .catch(e => {
     res.status(400).send();
@@ -112,10 +122,12 @@ exports.add_friend = function(req, res) {
 
 exports.remove_friend = function(req, res) {
   var senderModel = req.user;
-  var friendId = req.body.user_id;
-  User.removeFriend(friendId ,senderModel._id)
-  .then(message => {
-    res.send(message);
+  var friend_id = req.params.user_id;
+  User.removeFriend(friend_id ,senderModel._id)
+  .then(user_model => {
+    user_model.password = undefined;
+    user_model.tokens   = undefined;
+    res.send({message: 'user removed successfully', user_model});
   })
   .catch(e => {
     res.status(400).send(e);

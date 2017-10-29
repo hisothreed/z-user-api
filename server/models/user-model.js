@@ -124,18 +124,6 @@ UserSchema.pre('update',function (next) {
 
 // CLASS METHODS (STATICS)
 
-// UserSchema.statics.addEvent = function(event_model, user_id) {
-//   var User = this;
-//   return User.findOneAndUpdate({_id : user_id }, { $addToSet :
-//     { events : { event_id : event_model._id } }
-//   })
-//   .then(savedUser => {
-//     return { message : 'event saved to user' };
-//   })
-//   .catch(e => {
-//     return Promise.reject(e);
-//   })
-// }
 UserSchema.statics = {
   validateUser({email,password}) {
     var User = this;
@@ -172,11 +160,11 @@ UserSchema.statics = {
     var User = this;
     return User.findOneAndUpdate({_id : recieverId }, { $addToSet :
       { friends : { user_id : senderId } }
-    })
+    },{new: true})
     .then(recieverModel => {
       return User.findOneAndUpdate({_id : senderId}, { $addToSet :
         { friends : { user_id : recieverId }}
-      })
+      },{new: true})
       .then(senderModel => {
         return senderModel
       })
@@ -213,14 +201,14 @@ UserSchema.statics = {
   },
   listUsers() {
     var User = this;
-    return User.find();
+    return User.find()
   },
-  updateUserInfo(userData) {
+  updateUserInfo(user_id ,userData) {
     var User = this;
-    var options = {_id , email , first_name , last_name, password} = userData;
-    return User.findOneAndUpdate({_id},options)
+    var options = _.pick(userData, ['first_name','last_name','password','bio','region','platform']);
+    return User.findOneAndUpdate({_id : user_id},options,{new: true})
     .then(doc => {
-      return _.pick(options ,['email','first_name','last_name']);
+      return doc;
     }).catch(e => {
       return Promise.reject(e);
     })
@@ -229,13 +217,13 @@ UserSchema.statics = {
     var User = this;
     return User.findOneAndUpdate({ _id : sender_id} , { $pull :{
       friends : { user_id : friend_id } }
-    })
+    }, {new : true})
     .then(savedUser => {
       return User.findOneAndUpdate({ _id : friend_id }, { $pull :{
         friends : { user_id : sender_id } }
-      })
+      }, {new : true})
       .then(savedFriend => {
-        return 'Friend removed successfully';
+        return savedUser;
       })
     })
     .catch(e => {
@@ -248,9 +236,10 @@ UserSchema.methods.generateAuthToken = function() {
   var user = this;
   var token = jwt.sign({ _id : user._id.toHexString()}, config.JWT_SECRET);
   user.tokens.push({token : token});
-  return user.save().then(savedUser => {
-    return token
-  });
+  return user.save()
+    .then(savedUser => {
+      return { token , savedUser }
+    });
 }
 
 UserSchema.methods.destroySessionToken = function(token) {
